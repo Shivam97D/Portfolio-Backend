@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Portfolio API Tester</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 2rem;
+      background: #f4f4f9;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      margin: 10px 0;
+    }
+
+    .form-group input,
+    .form-group textarea {
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+
+    button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin: 5px 5px 10px 0;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #2980b9;
+    }
+
+    #responseOutput {
+      background: #fff;
+      padding: 1rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      white-space: pre-wrap;
+      max-height: 300px;
+      overflow-y: auto;
+      margin-top: 10px;
+    }
+
+    .projects-container {
+      margin-top: 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .project-card {
+      display: flex;
+      flex-direction: row;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      align-items: center;
+    }
+
+    .project-card img {
+      width: 180px;
+      height: 180px;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .project-info {
+      padding: 15px;
+      flex-grow: 1;
+    }
+
+    .project-info h4 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      color: #2c3e50;
+    }
+
+    .project-info p {
+      font-size: 14px;
+      color: #555;
+      margin: 0 0 12px;
+    }
+
+    .project-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    @media (max-width: 600px) {
+      .project-card {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .project-card img {
+        width: 100%;
+        height: 200px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>🔥 Firebase Portfolio API Tester</h1>
+
+  <div>
+    <div class="form-group">
+      <input type="text" id="title" placeholder="Project Title" />
+    </div>
+    <div class="form-group">
+      <textarea id="description" placeholder="Project Description"></textarea>
+    </div>
+    <div class="form-group">
+      Upload the img here <a href="https://shivam-dahifale.imgbb.com/" target="_blank" rel="noopener noreferrer" >LINK FOR IMG</a>.
+      <input type="text" id="img" placeholder="Upload img to above folder and enter the link here." />
+    </div>
+    <div class="form-group">
+      <input type="text" id="url" placeholder="Project URL (Live Website)">
+    </div>
+    <div class="form-group">
+      <input type="text" id="repo" placeholder="GitHub Repo Link">
+    </div>
+
+        <!-- Form Buttons -->
+    <button id="submitBtn" onclick="handleSubmit()">➕ Add Project</button>
+    <button onclick="getProjects()">📂 Get All Projects</button>
+  </div>
+
+  <h3>📋 Response:</h3>
+  Upload the documents here to make them available on webpage <a href="https://drive.google.com/drive/folders/17UXLpyw21VGlUpa3EIJhesSLkb4k18EK?usp=sharing" target="_blank" rel="noopener noreferrer" >LINK FOR Documents</a>.
+  <pre id="responseOutput">Click a button to test an endpoint...</pre>
+
+  <div class="projects-container" id="projectsList"></div>
+
+  
+
+
+  <script>
+  const API = 'http://localhost:3000/projects';
+  let editingProjectId = null;
+
+  async function getProjects() {
+    const res = await fetch(API);
+    const data = await res.json();
+    document.getElementById('responseOutput').textContent = JSON.stringify(data, null, 2);
+    displayProjects(data);
+  }
+
+  function fillForm(data) {
+    document.getElementById('title').value = data.title;
+    document.getElementById('description').value = data.description;
+    document.getElementById('img').value = data.img;
+    document.getElementById('url').value = data.url || '';
+    document.getElementById('repo').value = data.repo || '';
+    document.getElementById('submitBtn').textContent = '🔄 Update Project';
+  }
+
+  function resetForm() {
+    editingProjectId = null;
+    document.getElementById('title').value = '';
+    document.getElementById('description').value = '';
+    document.getElementById('img').value = '';
+    document.getElementById('url').value = '';
+    document.getElementById('repo').value = '';
+    document.getElementById('submitBtn').textContent = '➕ Add Project';
+  }
+
+  async function handleSubmit() {
+    const imgInput = document.getElementById('img').value.trim();
+    const img = convertGoogleDriveLink(imgInput);
+    const title = document.getElementById('title').value.trim();
+    const description = document.getElementById('description').value.trim();
+    const url = document.getElementById('url').value.trim();
+    const repo = document.getElementById('repo').value.trim();
+
+    if (!title || !description || !img) {
+      alert("Please fill all required fields (title, description, image)");
+      return;
+    }
+
+    const projectData = { title, description, img, url, repo };
+
+    let res, data;
+    if (editingProjectId) {
+      // Update
+      res = await fetch(`${API}/${editingProjectId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(projectData)
+      });
+    } else {
+      // Create
+      res = await fetch(API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(projectData)
+      });
+    }
+
+    data = await res.json();
+    document.getElementById('responseOutput').textContent = JSON.stringify(data, null, 2);
+    resetForm();
+    getProjects();
+  }
+
+  async function editProject(id) {
+    try {
+      const res = await fetch(API);
+      const data = await res.json();
+      const project = data.find(p => p.id === id);
+      if (!project) return;
+
+      editingProjectId = id;
+      fillForm(project);
+    } catch (error) {
+      console.error('Error fetching project for editing:', error);
+    }
+  }
+
+  async function deleteProject(id) {
+    if (!confirm("Are you sure you want to delete this project?")) return;
+
+    const res = await fetch(`${API}/${id}`, { method: "DELETE" });
+    const data = await res.json();
+    document.getElementById('responseOutput').textContent = JSON.stringify(data, null, 2);
+    getProjects();
+  }
+
+  function displayProjects(projects) {
+    const container = document.getElementById('projectsList');
+    container.innerHTML = '';
+    projects.forEach(p => {
+      container.innerHTML += `
+        <div class="project-card">
+          <img src="${p.img}" alt="${p.title}">
+          <div class="project-info">
+            <h4>${p.title}</h4>
+            <p>${p.description}</p>
+            ${p.url ? `<p><a href="${p.url}" target="_blank">🌐 Visit Site</a></p>` : ''}
+            ${p.repo ? `<p><a href="${p.repo}" target="_blank">📁 View Code</a></p>` : ''}
+            <div class="project-actions">
+              <button onclick="editProject('${p.id}')">✏️ Edit</button>
+              <button onclick="deleteProject('${p.id}')">🗑️ Delete</button>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+  }
+
+  function convertGoogleDriveLink(url) {
+    const match = url.match(/\/d\/(.+?)\//);
+    if (match) {
+      return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+    }
+    return url;
+  }
+
+  // Load existing projects on page load
+  //getProjects();
+</script>
+
+  
+
+</body>
+</html>
