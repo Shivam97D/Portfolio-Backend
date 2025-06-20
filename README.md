@@ -27,19 +27,19 @@ This is a RESTful backend API built with **Express.js** and **Firebase Firestore
 
 ## 📁 Folder Structure
 
-portfolio-backend/
-├── config/
-│ └── firebase.js
-├── controllers/
-│ └── projectController.js
-├── routes/
-│ └── projectRoutes.js
-├── public/
-├── .env
-├── .gitignore
-├── app.js
-├── package.json
-└── serviceAccountKey.json (ignored)
+portfolio-backend/    <br/>
+├── config/    <br/>
+│ └── firebase.js    <br/>
+├── controllers/    <br/>
+│ └── projectController.js    <br/>
+├── routes/    <br/>
+│ └── projectRoutes.js    <br/>
+├── public/    <br/>
+├── .env    <br/>
+├── .gitignore    <br/>
+├── app.js    <br/>
+├── package.json    <br/>
+└── serviceAccountKey.json (ignored)    <br/>
 
 
 
